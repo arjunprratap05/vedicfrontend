@@ -34,14 +34,40 @@ async function getServices(): Promise<Service[]> {
 }
 
 async function getAstrologer(): Promise<Astrologer | null> {
+  const baseUrl = process.env.NEXT_PUBLIC_STRAPI_URL || strapiUrl;
+
   try {
-    const res = await fetch(`${strapiUrl}/api/astrologers?populate=*`, { cache: 'no-store' });
-    if (!res.ok) return null;
+    const res = await fetch(`${baseUrl}/api/astrologers?populate=*`, { 
+      cache: 'no-store' 
+    });
+
+    if (!res.ok) {
+      console.error(`[Strapi Error] Fetch failed with status: ${res.status} (${res.statusText})`);
+      const errorBody = await res.text();
+      console.error(`[Strapi Response]`, errorBody);
+      return null;
+    }
+
     const json = await res.json();
-    if (!json.data || json.data.length === 0) return null;
+
+    if (!json.data || json.data.length === 0) {
+      console.warn("[Strapi Warning] No published astrologers found in response.");
+      return null;
+    }
+
     const item = json.data[0];
-    return { id: item.id, ...item, ...(item.attributes || {}) };
-  } catch { return null; }
+
+    // Handles both Strapi v4 (nested attributes) and Strapi v5 (flat structure)
+    return {
+      id: item.id,
+      documentId: item.documentId,
+      ...item,
+      ...(item.attributes || {}),
+    };
+  } catch (error) {
+    console.error("[Strapi Fetch Exception]:", error);
+    return null;
+  }
 }
 
 function getImageUrl(mediaObj: any): string | null {
