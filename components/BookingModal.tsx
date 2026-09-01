@@ -33,8 +33,11 @@ export default function BookingModal({ services }: BookingModalProps) {
     };
 
     try {
-      // 2. Send to Strapi (Strapi requires the payload to be wrapped in a 'data' object)
-      const response = await fetch('http://127.0.0.1:1337/api/bookings', {
+      // 2. Dynamically fetch the API URL from environment variables, with a production fallback
+      const API_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "https://vedicbackend-1gez.onrender.com";
+      
+      // 3. Send to Strapi (Strapi requires the payload to be wrapped in a 'data' object)
+      const response = await fetch(`${API_URL}/api/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +131,6 @@ export default function BookingModal({ services }: BookingModalProps) {
                   >
                     <option value="" disabled>Choose a consultation type...</option>
                     {services.map((service) => (
-                      /* IMPORTANT: Value is now service.id for the Strapi relation */
                       <option key={service.id} value={service.id}>
                         {service.Title}
                       </option>
